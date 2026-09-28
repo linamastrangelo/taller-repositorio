@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>¿Qué te pareció el taller?</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0; min-height: 100vh; min-height: 100dvh;
+    font-family: "Trebuchet MS", Arial, sans-serif;
+    background: linear-gradient(135deg, #fff6d8, #e9f8ff);
+    overflow: hidden; color: #333;
+  }
+  .card {
+    width: 100%; height: 100vh; height: 100dvh;
+    background: rgba(255,255,255,.96);
+    padding: 3vh 4vw;
+    text-align: center;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    position: relative; z-index: 2;
+  }
+  h1 { margin: 0 0 1vh; font-size: clamp(30px, 6vw, 84px); color: #3b4cca; }
+  .subtitle { font-size: clamp(18px, 3vw, 40px); margin: 0 0 4vh; }
+  .choices { display: flex; justify-content: center; gap: clamp(14px, 5vw, 70px); flex-wrap: nowrap; width: 100%; }
+  .choice {
+    border: 0; border-radius: 32px;
+    width: clamp(140px, 38vw, 520px);
+    height: clamp(190px, 44vh, 520px);
+    padding: 2vh 1vw; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    transition: transform .18s ease, box-shadow .18s ease;
+    font: inherit; color: #333; box-shadow: 0 10px 0 rgba(0,0,0,.10);
+  }
+  .choice:hover { transform: translateY(-7px) scale(1.03); }
+  .choice:active { transform: translateY(3px) scale(.97); box-shadow: 0 3px 0 rgba(0,0,0,.10); }
+  .sad { background: #ff7777; }
+  .happy { background: #72df8b; }
+  .face { font-size: clamp(64px, min(16vw, 22vh), 220px); line-height: 1; display: block; margin-bottom: 1.5vh; }
+  .label { font-size: clamp(20px, 3.4vw, 46px); font-weight: bold; }
+  .count { display: block; margin-top: 1vh; font-size: clamp(16px, 2.4vw, 32px); font-weight: bold; opacity: .85; }
+  .thanks { min-height: 1.4em; margin-top: 4vh; font-size: clamp(18px, 2.8vw, 36px); font-weight: bold; color: #555; }
+  .reset { margin-top: 1vh; background: none; border: 0; padding: 4px; color: #999; cursor: pointer; font: inherit; font-size: clamp(14px, 1.8vw, 22px); }
+  .reset.confirm { color: #e04b4b; font-weight: bold; }
+  .emoji { position: fixed; top: -80px; z-index: 10; pointer-events: none; animation: fall linear forwards; }
+  @keyframes fall {
+    0% { transform: translateY(-80px) rotate(0deg) scale(.7); opacity: 1; }
+    100% { transform: translateY(110vh) rotate(720deg) scale(1.2); opacity: 0; }
+  }
+  .pop { animation: pop .45s ease; }
+  @keyframes pop { 0% { transform: scale(1); } 45% { transform: scale(1.14); } 100% { transform: scale(1); } }
+
+  /* Tablet / pantalla vertical: botones más altos */
+  @media (orientation: portrait) and (min-width: 600px) {
+    .choice { height: clamp(260px, 38vh, 560px); }
+  }
+  /* Celular chico o pantalla baja */
+  @media (max-height: 520px) {
+    .subtitle { margin-bottom: 2vh; }
+    .choice { height: 52vh; }
+    .face { font-size: clamp(48px, 20vh, 120px); }
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>¿Qué te pareció el taller? 🌈</h1>
+  <p class="subtitle">Elegí la carita que mejor representa lo que sentís.</p>
+  <div class="choices">
+    <button class="choice happy" onclick="vote('happy', this)">
+      <span class="face">😄</span>
+      <span class="label">¡Me encantó!</span>
+      <span class="count" id="happyCount">0 votos</span>
+    </button>
+    <button class="choice sad" onclick="vote('sad', this)">
+      <span class="face">😕</span>
+      <span class="label">No me gustó</span>
+      <span class="count" id="sadCount">0 votos</span>
+    </button>
+  </div>
+  <div class="thanks" id="thanks">¡Gracias por participar! 💛</div>
+  <button class="reset" id="resetBtn" onclick="resetVotes()">Reiniciar contador</button>
+</div>
+<script>
+function load(k) { try { return Number(localStorage.getItem(k) || 0); } catch (e) { return 0; } }
+function save(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+function drop(k) { try { localStorage.removeItem(k); } catch (e) {} }
+
+let votes = { sad: load("taller_sad"), happy: load("taller_happy") };
+
+function updateCounters() {
+  document.getElementById("sadCount").textContent = votes.sad + (votes.sad === 1 ? " voto" : " votos");
+  document.getElementById("happyCount").textContent = votes.happy + (votes.happy === 1 ? " voto" : " votos");
+}
+
+function vote(type, button) {
+  votes[type]++;
+  save("taller_" + type, votes[type]);
+  updateCounters();
+  button.classList.remove("pop");
+  void button.offsetWidth;
+  button.classList.add("pop");
+  const emojis = type === "happy"
+    ? ["😄","😁","🥳","😍","⭐","💚","🌈","🎉"]
+    : ["😕","💭","💙"];
+  const amount = type === "happy" ? 35 : 12;
+  for (let i = 0; i < amount; i++) {
+    setTimeout(() => createEmoji(emojis[Math.floor(Math.random() * emojis.length)]), i * 25);
+  }
+  document.getElementById("thanks").textContent =
+    type === "happy" ? "¡Qué bueno que te gustó! 🎉" : "¡Gracias por contarnos! 💛";
+}
+
+function createEmoji(symbol) {
+  const e = document.createElement("div");
+  e.className = "emoji";
+  e.textContent = symbol;
+  e.style.left = Math.random() * 100 + "vw";
+  e.style.fontSize = (25 + Math.random() * 35) + "px";
+  e.style.animationDuration = (2.2 + Math.random() * 2.2) + "s";
+  document.body.appendChild(e);
+  setTimeout(() => e.remove(), 5000);
+}
+
+let resetTimer = null;
+function resetVotes() {
+  const btn = document.getElementById("resetBtn");
+  if (!btn.classList.contains("confirm")) {
+    btn.classList.add("confirm");
+    btn.textContent = "Tocá de nuevo para confirmar";
+    resetTimer = setTimeout(() => {
+      btn.classList.remove("confirm");
+      btn.textContent = "Reiniciar contador";
+    }, 3000);
+    return;
+  }
+  clearTimeout(resetTimer);
+  btn.classList.remove("confirm");
+  btn.textContent = "Reiniciar contador";
+  votes = { sad: 0, happy: 0 };
+  drop("taller_sad");
+  drop("taller_happy");
+  updateCounters();
+  document.getElementById("thanks").textContent = "Contador reiniciado 💛";
+}
+
+updateCounters();
+</script>
+</body>
+</html>
